@@ -1,5 +1,5 @@
 import pytest
-from totpapp.storage import Vault, WrongPasswordError
+from simorgh.storage import Vault, WrongPasswordError
 
 
 def test_roundtrip(tmp_path):

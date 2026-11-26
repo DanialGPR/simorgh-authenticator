@@ -27,7 +27,7 @@ class WrongPasswordError(Exception):
 
 def default_vault_path() -> Path:
     base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-    return base / "totpapp" / "vault.json"
+    return base / "simorgh" / "vault.json"
 
 
 def _derive_key(password: str, salt: bytes, n: int, r: int, p: int) -> bytes:
