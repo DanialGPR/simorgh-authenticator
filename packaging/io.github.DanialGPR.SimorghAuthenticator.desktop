@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Simorgh Authenticator
+Comment=Offline two-factor (TOTP) code generator
+Exec=simorgh-authenticator
+Icon=io.github.DanialGPR.SimorghAuthenticator
+Terminal=false
+Categories=Utility;Security;GTK;
+Keywords=2FA;TOTP;authenticator;OTP;security;
+StartupNotify=true
