@@ -1,5 +1,5 @@
 # Cyber Security Project 01 - 2FA Code Generator
-# Graphic Interface code based on TKinter
+# Graphic Interface code based on GTK v4.0
 # Date of Development: November 2026
 # Developrt: Danial Gholipour
 # BSc. Computer Engineering - Software
@@ -12,13 +12,13 @@
 
 import sys
 import time
+from pathlib import Path
 
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gio, GLib, Gtk
-
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 from simorgh.main import generate_totp, parse_otpauth_uri, seconds_remaining
 from simorgh.storage import (
     MAX_ACCOUNTS, MIN_PASSWORD_LEN, AccountLimitError, AccountStore, Settings,
@@ -984,8 +984,7 @@ class MainWindow(Adw.ApplicationWindow):
     def on_about(self, *_):
         Adw.AboutDialog(
             application_name=APP_NAME,
-            application_icon="dialog-password-symbolic",  # replaced when the icon exists
-            developer_name="DanialGPR", version="0.1.0",
+            developer_name="DanialGPR", version="1.0.0",
             comments="Offline two-factor (TOTP) code generator",
             website="https://github.com/DanialGPR/simorgh-authenticator",
         ).present(self)
@@ -1011,6 +1010,12 @@ class App(Adw.Application):
             self.settings.set("theme", value)
 
     def do_activate(self):
+        dev_icons = Path(__file__).resolve().parents[2] / "data" / "icons"
+        if dev_icons.is_dir():  # running from the source tree, not installed
+            Gtk.IconTheme.get_for_display(Gdk.Display.get_default()) \
+                .add_search_path(str(dev_icons))
+        Gtk.Window.set_default_icon_name(APP_ID)
+
         self.set_accels_for_action("win.add", ["<Ctrl>n"])
         self.set_accels_for_action("win.lock", ["<Ctrl>l"])
         self.set_accels_for_action("win.search", ["<Ctrl>f"])
