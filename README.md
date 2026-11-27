@@ -59,7 +59,7 @@ Run the tests with `python -m pytest -v`. Build the package with `./packaging/bu
 - Codes depend on your system clock. If your codes are rejected, check that your time is synchronised.
 - This project has not been independently audited.
 
-## Not supported
+## Not supported yet (Coming Soon)
 
 HOTP (counter-based), push approvals, SMS, hardware keys (FIDO2), Steam Guard, and scanning QR codes. Paste the secret key or `otpauth://` link instead.
 
