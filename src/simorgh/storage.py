@@ -102,7 +102,10 @@ def read_backup(path, backup_password: str) -> dict:
     raw = json.loads(Path(path).read_text(encoding="utf-8"))
     if raw.get("kind") != "simorgh-backup":
         raise ValueError("Not a Simorgh backup file")
-    key = _derive(backup_password, _unb64(raw["salt"]), raw["kdf"])
+    kdf = raw["kdf"]
+    if kdf["n"] > 2**17 or kdf["r"] > 16 or kdf["p"] > 4:
+        raise ValueError("Unsupported backup parameters")
+    key = _derive(backup_password, _unb64(raw["salt"]), kdf)
     try:
         plain = Fernet(key).decrypt(raw["data"].encode("ascii"))
     except InvalidToken:
@@ -201,6 +204,17 @@ class Account:
         self.entries = json.loads(plain)
         return new_key
 
+    # Replaces the recovery key (the old one stops working). Needs the password.
+    def regenerate_recovery(self, password: str) -> str:
+        self._require_unlocked()
+        if not self.verify_password(password):
+            raise WrongPasswordError("Wrong password")
+        raw = self._read()
+        new_key = new_recovery_key()
+        raw["rec"] = _wrap(self._data_key, _norm_recovery(new_key), raw["kdf"])
+        _write_private(self.path, raw)
+        return new_key
+
     def export_backup(self, path, backup_password: str) -> None:
         self._require_unlocked()
         check_password(backup_password)
@@ -286,3 +300,30 @@ class AccountStore:
         account._data_key = data_key
         account.entries = entries
         return account, recovery
+
+DEFAULT_SETTINGS = {
+    "theme": "default",
+    "auto_lock": 300,        # seconds, 0 = never
+    "clipboard_clear": 30,   # seconds, 0 = never
+    "hide_codes": False,
+}
+
+
+class Settings:
+    def __init__(self, base: Path | None = None):
+        self.path = Path(base or default_base()) / "settings.json"
+        self.values = dict(DEFAULT_SETTINGS)
+        try:
+            saved = json.loads(self.path.read_text(encoding="utf-8"))
+            for key, default in DEFAULT_SETTINGS.items():
+                if isinstance(saved.get(key), type(default)):
+                    self.values[key] = saved[key]
+        except (OSError, ValueError, AttributeError):
+            pass
+
+    def get(self, key):
+        return self.values[key]
+
+    def set(self, key, value) -> None:
+        self.values[key] = value
+        _write_private(self.path, self.values)

@@ -2,8 +2,8 @@ import pytest
 
 import simorgh.storage as storage
 from simorgh.storage import (
-    AccountLimitError, AccountStore, UsernameTakenError, WeakPasswordError,
-    WrongPasswordError, WrongRecoveryKeyError, read_backup,
+    AccountLimitError, AccountStore, Settings, UsernameTakenError,
+    WeakPasswordError, WrongPasswordError, WrongRecoveryKeyError, read_backup,
 )
 
 PW = "correct horse battery"
@@ -114,3 +114,21 @@ def test_delete_account(store):
         acc.delete("nope nope nope")
     acc.delete(PW)
     assert store.list() == []
+
+def test_regenerate_recovery(store):
+    acc, old = store.create("a", PW)
+    with pytest.raises(WrongPasswordError):
+        acc.regenerate_recovery("wrong password!!")
+    new = acc.regenerate_recovery(PW)
+    assert new != old
+    fresh = store.list()[0]
+    with pytest.raises(WrongRecoveryKeyError):
+        fresh.reset_with_recovery(old, "another password!")
+    fresh.reset_with_recovery(new, "another password!")
+
+
+def test_settings(tmp_path):
+    s = Settings(tmp_path)
+    assert s.get("auto_lock") == 300
+    s.set("auto_lock", 60)
+    assert Settings(tmp_path).get("auto_lock") == 60
